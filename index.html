@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple Tester</title>
+  <script type="text/javascript" src="elm.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header id="site-header">
+  <h1>Simple Tester</h1>
+  <p>A not-so-thorough tester display for unit tests</p>
+</header>
+
+<div id="test-output" class="section"></div>
+
+<footer id="site-footer">
+  <p>Source code on <a href="https://github.com/verythorough/simple-tester">GitHub</a></p>
+</footer>
+
+</body>
+
+<script type="text/javascript" src="spec.js"></script>
+
+<script type="text/javascript">
+  var app = Elm.embed(
+    Elm.Main,
+    document.getElementById("test-output"),
+    {testInfo: [1, tests[1].description]}
+  );
+</script>
+
+<script type="text/javascript">
+var another = tests[1];
+
+</script>
+
+
+</html>
