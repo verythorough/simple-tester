@@ -31,8 +31,35 @@
   var app = Elm.embed(
     Elm.Main,
     document.getElementById("test-output"),
-    {testInfo: [1, tests[1].description]}
+    {testInfo: [3, tests[3].description]}
   );
+
+  // function searchGithub(query) {
+  //   console.log("Searching for", query);
+  //   var search = github.getSearch(query);
+  //
+  //   search.repositories({}, function (err, repositories) {
+  //     console.log("Got response", repositories);
+  //
+  //   app.ports.githubResponseo.send(repositories);
+  //   });
+  // }
+
+  function runTest(index) {
+    tests[index].run ( function (result) {
+        console.log(tests[index].description + ": " + result);
+      }
+    )
+  }
+
+  function runAllTests (tests) {
+    var i = 0, len = tests.length;
+    for (i; i < len; i++) {
+      runTest(i);
+    }
+  }
+
+  app.ports.testRun.subscribe(runTest);
 </script>
 
 <script type="text/javascript">

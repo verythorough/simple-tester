@@ -1,6 +1,6 @@
 test
 
-model: id, status, description, code
+model: id, status, description, XcodeX
 init:
 
 update action:
@@ -20,7 +20,7 @@ model:
 test source?
 tests - decoded json?
 status object? waiting: int, running: int, passed: int, failed: Int
-message?
+message? (with role="status" aria-live="polite" aria-atomic="false")
   tests not found
   x tests waiting to run
   x tests running, x passed, x failed

@@ -21,14 +21,16 @@ import Effects exposing (Effects)
 type alias Model =
   { id : Int
   , description : String
+  , status : String
   }
 
 
-init : ( Int, String ) -> ( Model, Effects Action )
-init ( id, desc ) =
-  ( Model id desc
-  , Effects.none
-  )
+initialModel : ( Int, String ) -> Model
+initialModel ( id, desc ) =
+  { id = id
+  , description = desc
+  , status = "Not Started Yet"
+  }
 
 
 
@@ -36,17 +38,17 @@ init ( id, desc ) =
 
 
 type Action
-  = Increment
-  | Decrement
+  = StartTest Int
+  | TestResult
 
 
 update : Action -> Model -> ( Model, Effects Action )
 update action model =
   case action of
-    Increment ->
-      ( model, Effects.none )
+    StartTest id ->
+      ( { model | status = "Running" }, Effects.none )
 
-    Decrement ->
+    TestResult ->
       ( model, Effects.none )
 
 
@@ -56,6 +58,9 @@ update action model =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  tr
+  div
     []
-    [ td [] [ text (toString (model.id) ++ model.description) ] ]
+    [ button [ onClick address (StartTest model.id) ] [ text "Start" ]
+    , span [] [ text model.status ]
+    , span [] [ text model.description ]
+    ]

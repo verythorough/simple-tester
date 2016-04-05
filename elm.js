@@ -11824,44 +11824,51 @@ Elm.Test.make = function (_elm) {
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
    $Html = Elm.Html.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var view = F2(function (address,model) {
-      return A2($Html.tr,
-      _U.list([]),
-      _U.list([A2($Html.td,
-      _U.list([]),
-      _U.list([$Html.text(A2($Basics._op["++"],
-      $Basics.toString(model.id),
-      model.description))]))]));
-   });
    var update = F2(function (action,model) {
       var _p0 = action;
-      if (_p0.ctor === "Increment") {
-            return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+      if (_p0.ctor === "StartTest") {
+            return {ctor: "_Tuple2"
+                   ,_0: _U.update(model,{status: "Running"})
+                   ,_1: $Effects.none};
          } else {
             return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
          }
    });
-   var Decrement = {ctor: "Decrement"};
-   var Increment = {ctor: "Increment"};
-   var Model = F2(function (a,b) {
-      return {id: a,description: b};
-   });
-   var init = function (_p1) {
-      var _p2 = _p1;
-      return {ctor: "_Tuple2"
-             ,_0: A2(Model,_p2._0,_p2._1)
-             ,_1: $Effects.none};
+   var TestResult = {ctor: "TestResult"};
+   var StartTest = function (a) {
+      return {ctor: "StartTest",_0: a};
    };
+   var view = F2(function (address,model) {
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.button,
+              _U.list([A2($Html$Events.onClick,address,StartTest(model.id))]),
+              _U.list([$Html.text("Start")]))
+              ,A2($Html.span,_U.list([]),_U.list([$Html.text(model.status)]))
+              ,A2($Html.span,
+              _U.list([]),
+              _U.list([$Html.text(model.description)]))]));
+   });
+   var initialModel = function (_p1) {
+      var _p2 = _p1;
+      return {id: _p2._0
+             ,description: _p2._1
+             ,status: "Not Started Yet"};
+   };
+   var Model = F3(function (a,b,c) {
+      return {id: a,description: b,status: c};
+   });
    return _elm.Test.values = {_op: _op
                              ,Model: Model
-                             ,init: init
-                             ,Increment: Increment
-                             ,Decrement: Decrement
+                             ,initialModel: initialModel
+                             ,StartTest: StartTest
+                             ,TestResult: TestResult
                              ,update: update
                              ,view: view};
 };
@@ -11873,11 +11880,13 @@ Elm.Main.make = function (_elm) {
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $StartApp = Elm.StartApp.make(_elm),
+   $Task = Elm.Task.make(_elm),
    $Test = Elm.Test.make(_elm);
    var _op = {};
    var testInfo = Elm.Native.Port.make(_elm).inbound("testInfo",
@@ -11889,10 +11898,23 @@ Elm.Main.make = function (_elm) {
                                                            ,_1: typeof v[1] === "string" || typeof v[1] === "object" && v[1] instanceof String ? v[1] : _U.badPort("a string",
                                                            v[1])} : _U.badPort("an array",v);
    });
-   var app = $StartApp.start({init: $Test.init(testInfo)
+   var run = $Signal.mailbox(-1);
+   var testRun = Elm.Native.Port.make(_elm).outboundSignal("testRun",
+   function (v) {
+      return v;
+   },
+   run.signal);
+   var app = $StartApp.start({init: {ctor: "_Tuple2"
+                                    ,_0: $Test.initialModel(testInfo)
+                                    ,_1: $Effects.none}
                              ,update: $Test.update
                              ,view: $Test.view
                              ,inputs: _U.list([])});
    var main = app.html;
-   return _elm.Main.values = {_op: _op,app: app,main: main};
+   var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",
+   app.tasks);
+   return _elm.Main.values = {_op: _op
+                             ,app: app
+                             ,main: main
+                             ,run: run};
 };

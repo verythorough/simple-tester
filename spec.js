@@ -25,9 +25,9 @@ var tests = [
 //var simpleTester = Elm.embed(Elm.SimpleTester, el, {init info from Elm to JS ports});
 //simpleTester.ports.tests.send(tests);
 
-function runTest(test) {
-  test.run ( function (result) {
-      console.log(test.description + ": " + result);
+function runTest(index) {
+  tests[index].run ( function (result) {
+      console.log(tests[index].description + ": " + result);
     }
   )
 }
@@ -35,6 +35,6 @@ function runTest(test) {
 function runAllTests (tests) {
   var i = 0, len = tests.length;
   for (i; i < len; i++) {
-    runTest(tests[i]);
+    runTest(i);
   }
 }
