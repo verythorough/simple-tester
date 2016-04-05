@@ -31,7 +31,7 @@
   var app = Elm.embed(
     Elm.Main,
     document.getElementById("test-output"),
-    {testInfo: [3, tests[3].description]}
+    {testInfo: [2, tests[2].description]}
   );
 
   // function searchGithub(query) {
@@ -46,6 +46,7 @@
   // }
 
   function runTest(index) {
+    console.log("Running Test: " + tests[index].description)
     tests[index].run ( function (result) {
         console.log(tests[index].description + ": " + result);
       }
@@ -59,7 +60,7 @@
     }
   }
 
-  app.ports.testRun.subscribe(runTest);
+  app.ports.testStart.subscribe(runTest);
 </script>
 
 <script type="text/javascript">

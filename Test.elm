@@ -4,6 +4,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Effects exposing (Effects)
+import Task exposing (Task)
+import String
 
 
 -- MODEL
@@ -19,10 +21,14 @@ import Effects exposing (Effects)
 
 
 type alias Model =
-  { id : Int
+  { id : TestId
   , description : String
   , status : String
   }
+
+
+type alias TestId =
+  Int
 
 
 initialModel : ( Int, String ) -> Model
@@ -38,18 +44,34 @@ initialModel ( id, desc ) =
 
 
 type Action
-  = StartTest Int
+  = StartTest TestId
   | TestResult
+  | DoNothing
 
 
-update : Action -> Model -> ( Model, Effects Action )
-update action model =
+update : Signal.Address TestId -> Action -> Model -> ( Model, Effects Action )
+update startAddress action model =
   case action of
     StartTest id ->
-      ( { model | status = "Running" }, Effects.none )
+      ( { model | status = "Running" }
+      , Effects.task (startTask startAddress model.id)
+      )
 
     TestResult ->
       ( model, Effects.none )
+
+    DoNothing ->
+      ( model, Effects.none )
+
+
+startTask : Signal.Address TestId -> TestId -> Task x Action
+startTask address id =
+  let
+    task =
+      Signal.send address id
+        |> Task.map (\_ -> DoNothing)
+  in
+    Task.onError task (\_ -> Task.succeed DoNothing)
 
 
 
@@ -59,8 +81,21 @@ update action model =
 view : Signal.Address Action -> Model -> Html
 view address model =
   div
-    []
-    [ button [ onClick address (StartTest model.id) ] [ text "Start" ]
-    , span [] [ text model.status ]
-    , span [] [ text model.description ]
+    [ class ("test " ++ statusToClass model.status) ]
+    [ p
+        [ class "test-description" ]
+        [ text ("Test that: " ++ model.description) ]
+    , button
+        [ onClick address (StartTest model.id) ]
+        [ text "Start Test" ]
+    , span
+        [ class "test-status" ]
+        [ text (" Status: " ++ model.status) ]
     ]
+
+
+statusToClass : String -> String
+statusToClass status =
+  String.toLower status
+    |> String.split " "
+    |> String.join "-"

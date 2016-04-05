@@ -1,6 +1,6 @@
 module Main (..) where
 
-import Test exposing (initialModel, update, view)
+import Test exposing (initialModel, update, view, TestId)
 import StartApp
 import Task exposing (Task)
 import Effects
@@ -9,7 +9,7 @@ import Effects
 app =
   StartApp.start
     { init = ( initialModel testInfo, Effects.none )
-    , update = update
+    , update = update startTestMb.address
     , view = view
     , inputs = []
     }
@@ -24,14 +24,14 @@ port tasks =
   app.tasks
 
 
-run : Signal.Mailbox Int
-run =
+startTestMb : Signal.Mailbox TestId
+startTestMb =
   Signal.mailbox -1
 
 
-port testRun : Signal Int
-port testRun =
-  run.signal
+port testStart : Signal TestId
+port testStart =
+  startTestMb.signal
 
 
-port testInfo : ( Int, String )
+port testInfo : ( TestId, String )
