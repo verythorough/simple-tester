@@ -11838,6 +11838,20 @@ Elm.Test.make = function (_elm) {
       "-",
       A2($String.split," ",$String.toLower(status)));
    };
+   var viewInTable = F2(function (address,model) {
+      return A2($Html.tr,
+      _U.list([$Html$Attributes.$class(A2($Basics._op["++"],
+      "test ",
+      statusToClass(model.status)))]),
+      _U.list([A2($Html.td,
+              _U.list([$Html$Attributes.$class("test-status")]),
+              _U.list([$Html.text(model.status)]))
+              ,A2($Html.td,
+              _U.list([$Html$Attributes.$class("test-description")]),
+              _U.list([$Html.text(A2($Basics._op["++"],
+              $Basics.toString(model.id),
+              A2($Basics._op["++"],": ",model.description)))]))]));
+   });
    var DoNothing = {ctor: "DoNothing"};
    var update = F3(function (startAddress,action,model) {
       var _p0 = action;
@@ -11902,7 +11916,82 @@ Elm.Test.make = function (_elm) {
                              ,DoNothing: DoNothing
                              ,update: update
                              ,view: view
+                             ,viewInTable: viewInTable
                              ,statusToClass: statusToClass};
+};
+Elm.TestRunner = Elm.TestRunner || {};
+Elm.TestRunner.make = function (_elm) {
+   "use strict";
+   _elm.TestRunner = _elm.TestRunner || {};
+   if (_elm.TestRunner.values) return _elm.TestRunner.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Test = Elm.Test.make(_elm);
+   var _op = {};
+   var update = F3(function (startAddress,action,model) {
+      var _p0 = action;
+      return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+   });
+   var DoNothing = {ctor: "DoNothing"};
+   var testView = F2(function (address,model) {
+      return A2($Test.viewInTable,
+      A2($Signal.forwardTo,
+      address,
+      function (_p1) {
+         return DoNothing;
+      }),
+      model);
+   });
+   var view = F2(function (address,model) {
+      var tableHeader = A2($Html.thead,
+      _U.list([]),
+      _U.list([A2($Html.tr,
+      _U.list([]),
+      _U.list([A2($Html.th,
+              _U.list([]),
+              _U.list([$Html.text("Status")]))
+              ,A2($Html.th,
+              _U.list([]),
+              _U.list([$Html.text("Test Number/Description")]))]))]));
+      return A2($Html.div,
+      _U.list([]),
+      _U.list([A2($Html.p,
+              _U.list([]),
+              _U.list([$Html.text(model.message)]))
+              ,A2($Html.table,
+              _U.list([]),
+              A2($List._op["::"],
+              tableHeader,
+              A2($List.map,testView(address),model.tests)))]));
+   });
+   var initialModel = function (testList) {
+      return {tests: A2($List.map,
+             function (_p2) {
+                var _p3 = _p2;
+                return $Test.initialModel({ctor: "_Tuple2"
+                                          ,_0: _p3._0
+                                          ,_1: _p3._1});
+             },
+             testList)
+             ,message: "Use the Start button to run the following tests:"};
+   };
+   var Model = F2(function (a,b) {
+      return {tests: a,message: b};
+   });
+   return _elm.TestRunner.values = {_op: _op
+                                   ,Model: Model
+                                   ,initialModel: initialModel
+                                   ,DoNothing: DoNothing
+                                   ,update: update
+                                   ,view: view
+                                   ,testView: testView};
 };
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {
@@ -11919,10 +12008,10 @@ Elm.Main.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $StartApp = Elm.StartApp.make(_elm),
    $Task = Elm.Task.make(_elm),
-   $Test = Elm.Test.make(_elm);
+   $TestRunner = Elm.TestRunner.make(_elm);
    var _op = {};
    var testResult = Elm.Native.Port.make(_elm).inboundSignal("testResult",
-   "( Test.TestId, Bool )",
+   "( Int, Bool )",
    function (v) {
       return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple2"
                                                            ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
@@ -11931,13 +12020,15 @@ Elm.Main.make = function (_elm) {
                                                            v[1])} : _U.badPort("an array",v);
    });
    var testInfo = Elm.Native.Port.make(_elm).inbound("testInfo",
-   "( Test.TestId, String )",
+   "List ( Int, String )",
    function (v) {
-      return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple2"
-                                                           ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
-                                                           v[0])
-                                                           ,_1: typeof v[1] === "string" || typeof v[1] === "object" && v[1] instanceof String ? v[1] : _U.badPort("a string",
-                                                           v[1])} : _U.badPort("an array",v);
+      return typeof v === "object" && v instanceof Array ? Elm.Native.List.make(_elm).fromArray(v.map(function (v) {
+         return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple2"
+                                                              ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
+                                                              v[0])
+                                                              ,_1: typeof v[1] === "string" || typeof v[1] === "object" && v[1] instanceof String ? v[1] : _U.badPort("a string",
+                                                              v[1])} : _U.badPort("an array",v);
+      })) : _U.badPort("an array",v);
    });
    var startTestMb = $Signal.mailbox(-1);
    var testStart = Elm.Native.Port.make(_elm).outboundSignal("testStart",
@@ -11946,13 +12037,11 @@ Elm.Main.make = function (_elm) {
    },
    startTestMb.signal);
    var app = $StartApp.start({init: {ctor: "_Tuple2"
-                                    ,_0: $Test.initialModel(testInfo)
+                                    ,_0: $TestRunner.initialModel(testInfo)
                                     ,_1: $Effects.none}
-                             ,update: $Test.update(startTestMb.address)
-                             ,view: $Test.view
-                             ,inputs: _U.list([A2($Signal.map,
-                             $Test.ResultStatus,
-                             testResult)])});
+                             ,update: $TestRunner.update(startTestMb.address)
+                             ,view: $TestRunner.view
+                             ,inputs: _U.list([])});
    var main = app.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",
    app.tasks);

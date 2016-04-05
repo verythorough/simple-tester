@@ -31,10 +31,17 @@
   var app = Elm.embed(
     Elm.Main,
     document.getElementById("test-output"),
-    { testInfo: [2, tests[2].description]
+    { testInfo: listTests(tests)
     , testResult: [-1, false]
     }
   );
+  function listTests(tests) {
+    var i = 0, len = tests.length, testList =[];
+    for (i; i < len; i++) {
+      testList.push ([i, tests[i].description]);
+    }
+    return testList;
+  }
 
   function runTest(id) {
     var desc = tests[id].description

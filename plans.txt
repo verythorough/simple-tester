@@ -17,9 +17,9 @@ status & description
 testlist
 
 model:
-test source?
+Xtest source?
 tests - decoded json?
-status object? waiting: int, running: int, passed: int, failed: Int
+Xstatus object? waiting: int, running: int, passed: int, failed: Int
 message? (with role="status" aria-live="polite" aria-atomic="false")
   tests not found
   x tests waiting to run

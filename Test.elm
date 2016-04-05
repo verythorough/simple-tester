@@ -9,15 +9,6 @@ import String
 
 
 -- MODEL
--- type alias Model =
---   String
---
---
--- init : String -> ( Model, Effects Action )
--- init topic =
---   ( topic
---   , Effects.none
---   )
 
 
 type alias Model =
@@ -91,6 +82,19 @@ view address model =
     , span
         [ class "test-status" ]
         [ text (" Status: " ++ model.status) ]
+    ]
+
+
+viewInTable : Signal.Address Action -> Model -> Html
+viewInTable address model =
+  tr
+    [ class ("test " ++ statusToClass model.status) ]
+    [ td
+        [ class "test-status" ]
+        [ text model.status ]
+    , td
+        [ class "test-description" ]
+        [ text (toString (model.id) ++ ": " ++ model.description) ]
     ]
 
 
