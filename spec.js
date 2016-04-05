@@ -18,23 +18,3 @@ var tests = [
   { description: "semicolons are adequately waterproof", run: generateDummyTest() },
   { description: "capital letters can do yoga",          run: generateDummyTest() }
 ];
-
-
-//not sure whether to put in here or inline in html:
-//var el = document.getElementById('whatever');
-//var simpleTester = Elm.embed(Elm.SimpleTester, el, {init info from Elm to JS ports});
-//simpleTester.ports.tests.send(tests);
-
-function runTest(index) {
-  tests[index].run ( function (result) {
-      console.log(tests[index].description + ": " + result);
-    }
-  )
-}
-
-function runAllTests (tests) {
-  var i = 0, len = tests.length;
-  for (i; i < len; i++) {
-    runTest(i);
-  }
-}

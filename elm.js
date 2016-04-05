@@ -11839,30 +11839,30 @@ Elm.Test.make = function (_elm) {
       A2($String.split," ",$String.toLower(status)));
    };
    var DoNothing = {ctor: "DoNothing"};
-   var startTask = F2(function (address,id) {
-      var task = A2($Task.map,
-      function (_p0) {
-         return DoNothing;
-      },
-      A2($Signal.send,address,id));
-      return A2($Task.onError,
-      task,
-      function (_p1) {
-         return $Task.succeed(DoNothing);
-      });
-   });
    var update = F3(function (startAddress,action,model) {
-      var _p2 = action;
-      switch (_p2.ctor)
-      {case "StartTest": return {ctor: "_Tuple2"
-                                ,_0: _U.update(model,{status: "Running"})
-                                ,_1: $Effects.task(A2(startTask,startAddress,model.id))};
-         case "TestResult": return {ctor: "_Tuple2"
-                                   ,_0: model
-                                   ,_1: $Effects.none};
+      var _p0 = action;
+      switch (_p0.ctor)
+      {case "StartTest": var sendTask = A2($Task.map,
+           function (_p1) {
+              return DoNothing;
+           },
+           A2($Signal.send,startAddress,_p0._0));
+           return {ctor: "_Tuple2"
+                  ,_0: _U.update(model,{status: "Running"})
+                  ,_1: $Effects.task(A2($Task.onError,
+                  sendTask,
+                  function (_p2) {
+                     return $Task.succeed(DoNothing);
+                  }))};
+         case "ResultStatus": return {ctor: "_Tuple2"
+                                     ,_0: _U.eq(_p0._0._1,true) ? _U.update(model,
+                                     {status: "Passed"}) : _U.update(model,{status: "Failed"})
+                                     ,_1: $Effects.none};
          default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
    });
-   var TestResult = {ctor: "TestResult"};
+   var ResultStatus = function (a) {
+      return {ctor: "ResultStatus",_0: a};
+   };
    var StartTest = function (a) {
       return {ctor: "StartTest",_0: a};
    };
@@ -11898,10 +11898,9 @@ Elm.Test.make = function (_elm) {
                              ,Model: Model
                              ,initialModel: initialModel
                              ,StartTest: StartTest
-                             ,TestResult: TestResult
+                             ,ResultStatus: ResultStatus
                              ,DoNothing: DoNothing
                              ,update: update
-                             ,startTask: startTask
                              ,view: view
                              ,statusToClass: statusToClass};
 };
@@ -11922,6 +11921,15 @@ Elm.Main.make = function (_elm) {
    $Task = Elm.Task.make(_elm),
    $Test = Elm.Test.make(_elm);
    var _op = {};
+   var testResult = Elm.Native.Port.make(_elm).inboundSignal("testResult",
+   "( Test.TestId, Bool )",
+   function (v) {
+      return typeof v === "object" && v instanceof Array ? {ctor: "_Tuple2"
+                                                           ,_0: typeof v[0] === "number" && isFinite(v[0]) && Math.floor(v[0]) === v[0] ? v[0] : _U.badPort("an integer",
+                                                           v[0])
+                                                           ,_1: typeof v[1] === "boolean" ? v[1] : _U.badPort("a boolean (true or false)",
+                                                           v[1])} : _U.badPort("an array",v);
+   });
    var testInfo = Elm.Native.Port.make(_elm).inbound("testInfo",
    "( Test.TestId, String )",
    function (v) {
@@ -11942,7 +11950,9 @@ Elm.Main.make = function (_elm) {
                                     ,_1: $Effects.none}
                              ,update: $Test.update(startTestMb.address)
                              ,view: $Test.view
-                             ,inputs: _U.list([])});
+                             ,inputs: _U.list([A2($Signal.map,
+                             $Test.ResultStatus,
+                             testResult)])});
    var main = app.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",
    app.tasks);

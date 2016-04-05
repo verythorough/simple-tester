@@ -45,7 +45,7 @@ initialModel ( id, desc ) =
 
 type Action
   = StartTest TestId
-  | TestResult
+  | ResultStatus ( TestId, Bool )
   | DoNothing
 
 
@@ -53,25 +53,25 @@ update : Signal.Address TestId -> Action -> Model -> ( Model, Effects Action )
 update startAddress action model =
   case action of
     StartTest id ->
-      ( { model | status = "Running" }
-      , Effects.task (startTask startAddress model.id)
-      )
+      let
+        sendTask =
+          Signal.send startAddress id
+            |> Task.map (\_ -> DoNothing)
+      in
+        ( { model | status = "Running" }
+        , Effects.task <| Task.onError sendTask (\_ -> Task.succeed DoNothing)
+        )
 
-    TestResult ->
-      ( model, Effects.none )
+    ResultStatus ( id, hasPassed ) ->
+      ( if hasPassed == True then
+          { model | status = "Passed" }
+        else
+          { model | status = "Failed" }
+      , Effects.none
+      )
 
     DoNothing ->
       ( model, Effects.none )
-
-
-startTask : Signal.Address TestId -> TestId -> Task x Action
-startTask address id =
-  let
-    task =
-      Signal.send address id
-        |> Task.map (\_ -> DoNothing)
-  in
-    Task.onError task (\_ -> Task.succeed DoNothing)
 
 
 

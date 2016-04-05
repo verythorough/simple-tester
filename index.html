@@ -31,34 +31,27 @@
   var app = Elm.embed(
     Elm.Main,
     document.getElementById("test-output"),
-    {testInfo: [2, tests[2].description]}
+    { testInfo: [2, tests[2].description]
+    , testResult: [-1, false]
+    }
   );
 
-  // function searchGithub(query) {
-  //   console.log("Searching for", query);
-  //   var search = github.getSearch(query);
-  //
-  //   search.repositories({}, function (err, repositories) {
-  //     console.log("Got response", repositories);
-  //
-  //   app.ports.githubResponseo.send(repositories);
-  //   });
-  // }
-
-  function runTest(index) {
-    console.log("Running Test: " + tests[index].description)
-    tests[index].run ( function (result) {
-        console.log(tests[index].description + ": " + result);
+  function runTest(id) {
+    var desc = tests[id].description
+    console.log("Running Test " + id + ": " + desc)
+    tests[id].run ( function (result) {
+        console.log("Test " + id + " (" + desc + "): " + result);
+        app.ports.testResult.send([id, result]);
       }
     )
   }
 
-  function runAllTests (tests) {
-    var i = 0, len = tests.length;
-    for (i; i < len; i++) {
-      runTest(i);
-    }
-  }
+  // function runAllTests (tests) {
+  //   var i = 0, len = tests.length;
+  //   for (i; i < len; i++) {
+  //     runTest(i);
+  //   }
+  // }
 
   app.ports.testStart.subscribe(runTest);
 </script>

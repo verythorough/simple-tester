@@ -11,7 +11,7 @@ app =
     { init = ( initialModel testInfo, Effects.none )
     , update = update startTestMb.address
     , view = view
-    , inputs = []
+    , inputs = [ Signal.map Test.ResultStatus testResult ]
     }
 
 
@@ -35,3 +35,4 @@ port testStart =
 
 
 port testInfo : ( TestId, String )
+port testResult : Signal ( TestId, Bool )
