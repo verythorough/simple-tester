@@ -44,14 +44,9 @@ update : Signal.Address TestId -> Action -> Model -> ( Model, Effects Action )
 update startAddress action model =
   case action of
     StartTest id ->
-      let
-        sendTask =
-          Signal.send startAddress id
-            |> Task.map (\_ -> DoNothing)
-      in
-        ( { model | status = "Running" }
-        , Effects.task <| Task.onError sendTask (\_ -> Task.succeed DoNothing)
-        )
+      ( { model | status = "Running" }
+      , startTest startAddress model.id
+      )
 
     ResultStatus ( id, hasPassed ) ->
       ( if hasPassed == True then
@@ -103,3 +98,18 @@ statusToClass status =
   String.toLower status
     |> String.split " "
     |> String.join "-"
+
+
+
+-- EFFECTS
+
+
+startTest : Signal.Address TestId -> TestId -> Effects Action
+startTest startAddress id =
+  let
+    sendTask =
+      Signal.send startAddress id
+        |> Task.map (\_ -> DoNothing)
+  in
+    Task.onError sendTask (\_ -> Task.succeed DoNothing)
+      |> Effects.task

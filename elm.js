@@ -11853,23 +11853,26 @@ Elm.Test.make = function (_elm) {
               A2($Basics._op["++"],": ",model.description)))]))]));
    });
    var DoNothing = {ctor: "DoNothing"};
+   var startTest = F2(function (startAddress,id) {
+      var sendTask = A2($Task.map,
+      function (_p0) {
+         return DoNothing;
+      },
+      A2($Signal.send,startAddress,id));
+      return $Effects.task(A2($Task.onError,
+      sendTask,
+      function (_p1) {
+         return $Task.succeed(DoNothing);
+      }));
+   });
    var update = F3(function (startAddress,action,model) {
-      var _p0 = action;
-      switch (_p0.ctor)
-      {case "StartTest": var sendTask = A2($Task.map,
-           function (_p1) {
-              return DoNothing;
-           },
-           A2($Signal.send,startAddress,_p0._0));
-           return {ctor: "_Tuple2"
-                  ,_0: _U.update(model,{status: "Running"})
-                  ,_1: $Effects.task(A2($Task.onError,
-                  sendTask,
-                  function (_p2) {
-                     return $Task.succeed(DoNothing);
-                  }))};
+      var _p2 = action;
+      switch (_p2.ctor)
+      {case "StartTest": return {ctor: "_Tuple2"
+                                ,_0: _U.update(model,{status: "Running"})
+                                ,_1: A2(startTest,startAddress,model.id)};
          case "ResultStatus": return {ctor: "_Tuple2"
-                                     ,_0: _U.eq(_p0._0._1,true) ? _U.update(model,
+                                     ,_0: _U.eq(_p2._0._1,true) ? _U.update(model,
                                      {status: "Passed"}) : _U.update(model,{status: "Failed"})
                                      ,_1: $Effects.none};
          default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
@@ -11917,7 +11920,8 @@ Elm.Test.make = function (_elm) {
                              ,update: update
                              ,view: view
                              ,viewInTable: viewInTable
-                             ,statusToClass: statusToClass};
+                             ,statusToClass: statusToClass
+                             ,startTest: startTest};
 };
 Elm.TestRunner = Elm.TestRunner || {};
 Elm.TestRunner.make = function (_elm) {
@@ -11933,33 +11937,20 @@ Elm.TestRunner.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
+   $Task = Elm.Task.make(_elm),
    $Test = Elm.Test.make(_elm);
    var _op = {};
-   var update = F3(function (startAddress,action,model) {
-      var _p0 = action;
-      return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
-   });
    var DoNothing = {ctor: "DoNothing"};
    var testView = F2(function (address,model) {
       return A2($Test.viewInTable,
       A2($Signal.forwardTo,
       address,
-      function (_p1) {
+      function (_p0) {
          return DoNothing;
       }),
       model);
    });
    var view = F2(function (address,model) {
-      var tableHeader = A2($Html.thead,
-      _U.list([]),
-      _U.list([A2($Html.tr,
-      _U.list([]),
-      _U.list([A2($Html.th,
-              _U.list([]),
-              _U.list([$Html.text("Status")]))
-              ,A2($Html.th,
-              _U.list([]),
-              _U.list([$Html.text("Test Number/Description")]))]))]));
       return A2($Html.div,
       _U.list([]),
       _U.list([A2($Html.p,
@@ -11967,31 +11958,55 @@ Elm.TestRunner.make = function (_elm) {
               _U.list([$Html.text(model.message)]))
               ,A2($Html.table,
               _U.list([]),
-              A2($List._op["::"],
-              tableHeader,
-              A2($List.map,testView(address),model.tests)))]));
+              _U.list([A2($Html.thead,
+                      _U.list([]),
+                      _U.list([A2($Html.tr,
+                      _U.list([]),
+                      _U.list([A2($Html.th,
+                              _U.list([]),
+                              _U.list([$Html.text("Status")]))
+                              ,A2($Html.th,
+                              _U.list([]),
+                              _U.list([$Html.text("Test Number/Description")]))]))]))
+                      ,A2($Html.tbody,
+                      _U.list([]),
+                      A2($List.map,testView(address),model.tests))]))]));
    });
-   var initialModel = function (testList) {
-      return {tests: A2($List.map,
-             function (_p2) {
-                var _p3 = _p2;
-                return $Test.initialModel({ctor: "_Tuple2"
-                                          ,_0: _p3._0
-                                          ,_1: _p3._1});
-             },
-             testList)
-             ,message: "Use the Start button to run the following tests:"};
+   var BuildTests = function (a) {
+      return {ctor: "BuildTests",_0: a};
+   };
+   var loadTests = function (testList) {
+      return $Effects.task($Task.succeed(BuildTests(testList)));
    };
    var Model = F2(function (a,b) {
       return {tests: a,message: b};
    });
+   var init = function (testList) {
+      return {ctor: "_Tuple2"
+             ,_0: A2(Model,_U.list([]),"Waiting for tests...")
+             ,_1: loadTests(testList)};
+   };
+   var update = F3(function (startAddress,action,model) {
+      var _p1 = action;
+      if (_p1.ctor === "BuildTests") {
+            return {ctor: "_Tuple2"
+                   ,_0: A2(Model,
+                   A2($List.map,$Test.initialModel,_p1._0),
+                   "Use the Start button to run the following tests:")
+                   ,_1: $Effects.none};
+         } else {
+            return {ctor: "_Tuple2",_0: model,_1: $Effects.none};
+         }
+   });
    return _elm.TestRunner.values = {_op: _op
                                    ,Model: Model
-                                   ,initialModel: initialModel
+                                   ,init: init
+                                   ,BuildTests: BuildTests
                                    ,DoNothing: DoNothing
                                    ,update: update
                                    ,view: view
-                                   ,testView: testView};
+                                   ,testView: testView
+                                   ,loadTests: loadTests};
 };
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {
@@ -12036,9 +12051,7 @@ Elm.Main.make = function (_elm) {
       return v;
    },
    startTestMb.signal);
-   var app = $StartApp.start({init: {ctor: "_Tuple2"
-                                    ,_0: $TestRunner.initialModel(testInfo)
-                                    ,_1: $Effects.none}
+   var app = $StartApp.start({init: $TestRunner.init(testInfo)
                              ,update: $TestRunner.update(startTestMb.address)
                              ,view: $TestRunner.view
                              ,inputs: _U.list([])});

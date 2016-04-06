@@ -1,6 +1,6 @@
 module Main (..) where
 
-import TestRunner exposing (initialModel, update, view)
+import TestRunner exposing (init, update, view)
 import StartApp
 import Task exposing (Task)
 import Effects
@@ -8,7 +8,7 @@ import Effects
 
 app =
   StartApp.start
-    { init = ( initialModel testInfo, Effects.none )
+    { init = init testInfo
     , update = update startTestMb.address
     , view =
         view

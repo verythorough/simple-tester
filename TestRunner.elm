@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Effects exposing (Effects)
+import Task
 
 
 -- MODEL
@@ -16,11 +17,19 @@ type alias Model =
   }
 
 
-initialModel : List ( Int, String ) -> Model
-initialModel testList =
-  { tests = List.map (\( id, desc ) -> Test.initialModel ( id, desc )) testList
-  , message = "Use the Start button to run the following tests:"
-  }
+
+-- initialModel : List ( Int, String ) -> Model
+-- initialModel testList =
+--   { tests = List.map (\( id, desc ) -> Test.initialModel ( id, desc )) testList
+--   , message = "Use the Start button to run the following tests:"
+--   }
+
+
+init : List ( Int, String ) -> ( Model, Effects Action )
+init testList =
+  ( Model [] "Waiting for tests..."
+  , loadTests testList
+  )
 
 
 
@@ -28,12 +37,20 @@ initialModel testList =
 
 
 type Action
-  = DoNothing
+  = BuildTests (List ( Int, String ))
+  | DoNothing
 
 
 update : Signal.Address TestId -> Action -> Model -> ( Model, Effects Action )
 update startAddress action model =
   case action of
+    BuildTests testList ->
+      ( Model
+          (List.map Test.initialModel testList)
+          "Use the Start button to run the following tests:"
+      , Effects.none
+      )
+
     -- StartTests ->
     --   ( { model
     --       | tests =
@@ -61,24 +78,24 @@ update startAddress action model =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  let
-    tableHeader =
-      thead
+  div
+    []
+    [ p [] [ text model.message ]
+    , table
         []
-        [ tr
+        [ thead
             []
-            [ th [] [ text "Status" ]
-            , th [] [ text "Test Number/Description" ]
+            [ tr
+                []
+                [ th [] [ text "Status" ]
+                , th [] [ text "Test Number/Description" ]
+                ]
             ]
+        , tbody
+            []
+            (List.map (testView address) model.tests)
         ]
-  in
-    div
-      []
-      [ p [] [ text model.message ]
-      , table
-          []
-          (tableHeader :: List.map (testView address) model.tests)
-      ]
+    ]
 
 
 
@@ -117,3 +134,11 @@ testView address model =
 --         (Signal.forwardTo address (always (Remove id)))
 --   in
 --     Counter.viewWithRemoveButton context model
+-- EFFECTS
+
+
+loadTests : List ( Int, String ) -> Effects Action
+loadTests testList =
+  BuildTests testList
+    |> Task.succeed
+    |> Effects.task
