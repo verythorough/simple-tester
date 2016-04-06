@@ -11951,58 +11951,81 @@ Elm.TestRunner.make = function (_elm) {
       return {ctor: "PassResult",_0: a};
    };
    var SubMsg = function (a) {    return {ctor: "SubMsg",_0: a};};
-   var testView = F2(function (address,model) {
+   var viewTest = F2(function (address,model) {
       return A2($Test.viewInTable,
       A2($Signal.forwardTo,address,SubMsg),
       model);
    });
-   var view = F2(function (address,model) {
-      var failedTally = A2(statusTally,model.tests,"Failed");
-      var passedTally = A2(statusTally,model.tests,"Passed");
-      var runningTally = A2(statusTally,model.tests,"Running");
-      var notStartedTally = A2(statusTally,
-      model.tests,
-      "Not Started Yet");
-      var totalTally = $List.length(model.tests);
-      var message = _U.eq(passedTally + failedTally,
-      totalTally) ? "Tests Complete!" : _U.cmp(runningTally,
-      0) > 0 ? "Tests Started!" : model.message;
-      return A2($Html.div,
+   var viewTestTable = F2(function (address,model) {
+      return A2($Html.table,
       _U.list([]),
-      _U.list([A2($Html.p,_U.list([]),_U.list([$Html.text(message)]))
-              ,A2($Html.button,
-              _U.list([A2($Html$Events.onClick,
-              address,
-              SubMsg($Test.StartTest))]),
-              _U.list([$Html.text("Start")]))
-              ,A2($Html.table,
+      _U.list([A2($Html.thead,
               _U.list([]),
-              _U.list([A2($Html.thead,
-                      _U.list([]),
-                      _U.list([A2($Html.tr,
-                      _U.list([]),
-                      _U.list([A2($Html.th,
-                              _U.list([]),
-                              _U.list([$Html.text("Status")]))
-                              ,A2($Html.th,
-                              _U.list([]),
-                              _U.list([$Html.text("Test Number/Description")]))]))]))
-                      ,A2($Html.tbody,
-                      _U.list([]),
-                      A2($List.map,testView(address),model.tests))]))
-              ,A2($Html.p,
+              _U.list([A2($Html.tr,
               _U.list([]),
-              _U.list([$Html.text(A2($Basics._op["++"],
-              "Running: ",
-              A2($Basics._op["++"],
-              $Basics.toString(runningTally),
-              A2($Basics._op["++"],
-              " Passed: ",
-              A2($Basics._op["++"],
-              $Basics.toString(passedTally),
-              A2($Basics._op["++"],
-              " Failed: ",
-              $Basics.toString(failedTally)))))))]))]));
+              _U.list([A2($Html.th,
+                      _U.list([]),
+                      _U.list([$Html.text("Status")]))
+                      ,A2($Html.th,
+                      _U.list([]),
+                      _U.list([$Html.text("Test Number/Description")]))]))]))
+              ,A2($Html.tbody,
+              _U.list([]),
+              A2($List.map,viewTest(address),model.tests))]));
+   });
+   var view = F2(function (address,model) {
+      var failedStr = $Basics.toString(A2(statusTally,
+      model.tests,
+      "Failed"));
+      var passedStr = $Basics.toString(A2(statusTally,
+      model.tests,
+      "Passed"));
+      var passOrFailSummary = _U.eq(A2(statusTally,
+      model.tests,
+      "Passed"),
+      $List.length(model.tests)) ? A2($Basics._op["++"],
+      "Woohoo! All ",
+      A2($Basics._op["++"],
+      passedStr,
+      " tests passed!")) : A2($Basics._op["++"],
+      passedStr,
+      A2($Basics._op["++"],
+      " passed; ",
+      A2($Basics._op["++"],failedStr," failed.")));
+      var runningStr = $Basics.toString(A2(statusTally,
+      model.tests,
+      "Running"));
+      var pTag = function (msg) {
+         return A2($Html.p,_U.list([]),_U.list([$Html.text(msg)]));
+      };
+      var elementsByState = function () {
+         var _p0 = model.state;
+         switch (_p0.ctor)
+         {case "Waiting": return _U.list([pTag("Waiting for Tests...")]);
+            case "Loaded":
+            return _U.list([pTag("Use the Start button to run the following tests:")
+                           ,A2($Html.button,
+                           _U.list([A2($Html$Events.onClick,
+                           address,
+                           SubMsg($Test.StartTest))]),
+                           _U.list([$Html.text("Start")]))
+                           ,A2(viewTestTable,address,model)]);
+            case "Started": return _U.list([pTag("Tests Started!")
+                                           ,pTag(A2($Basics._op["++"],
+                                           runningStr,
+                                           A2($Basics._op["++"],
+                                           " running; ",
+                                           A2($Basics._op["++"],
+                                           passedStr,
+                                           A2($Basics._op["++"],
+                                           " passed; ",
+                                           A2($Basics._op["++"],failedStr," failed."))))))
+                                           ,A2(viewTestTable,address,model)]);
+            default: return _U.list([pTag("FINISHED!")
+                                    ,pTag(passOrFailSummary)
+                                    ,A2(viewTestTable,address,model)]);}
+      }();
+      return A2($Html.div,_U.list([]),elementsByState);
    });
    var BuildTests = function (a) {
       return {ctor: "BuildTests",_0: a};
@@ -12010,60 +12033,72 @@ Elm.TestRunner.make = function (_elm) {
    var loadTests = function (testList) {
       return $Effects.task($Task.succeed(BuildTests(testList)));
    };
+   var Finished = {ctor: "Finished"};
+   var Started = {ctor: "Started"};
+   var Loaded = {ctor: "Loaded"};
+   var Waiting = {ctor: "Waiting"};
    var Model = F2(function (a,b) {
-      return {tests: a,message: b};
+      return {tests: a,state: b};
    });
    var init = function (testList) {
       return {ctor: "_Tuple2"
-             ,_0: A2(Model,_U.list([]),"Waiting for tests...")
+             ,_0: A2(Model,_U.list([]),Waiting)
              ,_1: loadTests(testList)};
    };
    var update = F3(function (startAddress,action,model) {
-      var _p0 = action;
-      switch (_p0.ctor)
+      var _p1 = action;
+      switch (_p1.ctor)
       {case "BuildTests": return {ctor: "_Tuple2"
-                                 ,_0: A2(Model,
-                                 A2($List.map,$Test.initialModel,_p0._0),
-                                 "Use the Start button to run the following tests:")
+                                 ,_0: A2(Model,A2($List.map,$Test.initialModel,_p1._0),Loaded)
                                  ,_1: $Effects.none};
-         case "SubMsg": var subUpdate = function (test) {
-              var _p1 = A3($Test.update,startAddress,_p0._0,test);
-              var updatedTest = _p1._0;
-              var fx = _p1._1;
+         case "SubMsg": var _p4 = _p1._0;
+           var newState = _U.eq(_p4,
+           $Test.StartTest) ? Started : model.state;
+           var subUpdate = function (test) {
+              var _p2 = A3($Test.update,startAddress,_p4,test);
+              var updatedTest = _p2._0;
+              var fx = _p2._1;
               return {ctor: "_Tuple2"
                      ,_0: updatedTest
                      ,_1: A2($Effects.map,SubMsg,fx)};
            };
-           var _p2 = $List.unzip(A2($List.map,subUpdate,model.tests));
-           var newTestList = _p2._0;
-           var fxList = _p2._1;
+           var _p3 = $List.unzip(A2($List.map,subUpdate,model.tests));
+           var newTestList = _p3._0;
+           var fxList = _p3._1;
            return {ctor: "_Tuple2"
-                  ,_0: _U.update(model,{tests: newTestList})
+                  ,_0: _U.update(model,{tests: newTestList,state: newState})
                   ,_1: $Effects.batch(fxList)};
-         case "PassResult": var _p3 = _p0._0._0;
+         case "PassResult": var _p5 = _p1._0._0;
+           var newState = _U.eq(A2(statusTally,model.tests,"Running"),
+           0) ? Finished : model.state;
            var updateStatus = function (testModel) {
-              return _U.eq(testModel.id,_p3) ? $Basics.fst(A3($Test.update,
+              return _U.eq(testModel.id,_p5) ? $Basics.fst(A3($Test.update,
               startAddress,
-              $Test.ResultStatus({ctor: "_Tuple2",_0: _p3,_1: _p0._0._1}),
+              $Test.ResultStatus({ctor: "_Tuple2",_0: _p5,_1: _p1._0._1}),
               testModel)) : testModel;
            };
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,
-                  {tests: A2($List.map,updateStatus,model.tests)})
+                  {tests: A2($List.map,updateStatus,model.tests),state: newState})
                   ,_1: $Effects.none};
          default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
    });
    return _elm.TestRunner.values = {_op: _op
                                    ,Model: Model
+                                   ,Waiting: Waiting
+                                   ,Loaded: Loaded
+                                   ,Started: Started
+                                   ,Finished: Finished
                                    ,init: init
                                    ,BuildTests: BuildTests
                                    ,SubMsg: SubMsg
                                    ,PassResult: PassResult
                                    ,DoNothing: DoNothing
                                    ,update: update
-                                   ,view: view
                                    ,statusTally: statusTally
-                                   ,testView: testView
+                                   ,view: view
+                                   ,viewTestTable: viewTestTable
+                                   ,viewTest: viewTest
                                    ,loadTests: loadTests};
 };
 Elm.Main = Elm.Main || {};

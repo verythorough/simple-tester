@@ -13,21 +13,20 @@ import Task
 
 type alias Model =
   { tests : List Test.Model
-  , message : String
+  , state : TestingState
   }
 
 
-
--- initialModel : List ( Int, String ) -> Model
--- initialModel testList =
---   { tests = List.map (\( id, desc ) -> Test.initialModel ( id, desc )) testList
---   , message = "Use the Start button to run the following tests:"
---   }
+type TestingState
+  = Waiting
+  | Loaded
+  | Started
+  | Finished
 
 
 init : List ( Int, String ) -> ( Model, Effects Action )
 init testList =
-  ( Model [] "Waiting for tests..."
+  ( Model [] Waiting
   , loadTests testList
   )
 
@@ -49,10 +48,11 @@ update startAddress action model =
     BuildTests testList ->
       ( Model
           (List.map Test.initialModel testList)
-          "Use the Start button to run the following tests:"
+          Loaded
       , Effects.none
       )
 
+    --TODO: combine SubMsg and PassResult into one message
     SubMsg msg ->
       let
         subUpdate test =
@@ -68,8 +68,14 @@ update startAddress action model =
           model.tests
             |> List.map subUpdate
             |> List.unzip
+
+        newState =
+          if msg == Test.StartTest then
+            Started
+          else
+            model.state
       in
-        ( { model | tests = newTestList }
+        ( { model | tests = newTestList, state = newState }
         , Effects.batch fxList
         )
 
@@ -80,107 +86,19 @@ update startAddress action model =
             fst (Test.update startAddress (Test.ResultStatus ( id, hasPassed )) testModel)
           else
             testModel
+
+        newState =
+          if statusTally model.tests "Running" == 0 then
+            Finished
+          else
+            model.state
       in
-        ( { model | tests = List.map updateStatus model.tests }
+        ( { model | tests = List.map updateStatus model.tests, state = newState }
         , Effects.none
         )
 
-    --
-    --
-    -- ResultStatus ( id, hasPassed ) ->
-    --   ( if hasPassed == True then
-    --       { model | status = "Passed" }
-    --     else
-    --       { model | status = "Failed" }
-    --   , Effects.none
-    --   )
-    --
     DoNothing ->
       ( model, Effects.none )
-
-
-
--- VIEW
-
-
-view : Signal.Address Action -> Model -> Html
-view address model =
-  let
-    totalTally =
-      List.length model.tests
-
-    notStartedTally =
-      statusTally model.tests "Not Started Yet"
-
-    runningTally =
-      statusTally model.tests "Running"
-
-    passedTally =
-      statusTally model.tests "Passed"
-
-    failedTally =
-      statusTally model.tests "Failed"
-
-    message =
-      if (passedTally + failedTally == totalTally) then
-        "Tests Complete!"
-      else if (runningTally > 0) then
-        "Tests Started!"
-      else
-        model.message
-  in
-    div
-      []
-      [ p [] [ text message ]
-      , button [ onClick address (SubMsg (Test.StartTest)) ] [ text "Start" ]
-      , table
-          []
-          [ thead
-              []
-              [ tr
-                  []
-                  [ th [] [ text "Status" ]
-                  , th [] [ text "Test Number/Description" ]
-                  ]
-              ]
-          , tbody
-              []
-              (List.map (testView address) model.tests)
-          ]
-      , p
-          []
-          [ text
-              ("Running: "
-                ++ (runningTally |> toString)
-                ++ " Passed: "
-                ++ (passedTally |> toString)
-                ++ " Failed: "
-                ++ (failedTally |> toString)
-              )
-          ]
-      ]
-
-
-
--- messageView : Model -> Html
--- messageView model =
---   let
---     totalTally = List.length model.tests
---     notStartedTally = statusTally model.tests "Not Started Yet"
---     runningTally = statusTally model.tests "Running"
---     passedTally = statusTally model.tests "Passed"
---     failedTally = statusTally model.tests "Failed"
---   in
---     if totalTally == 0 then
---       p [] [ text "Waiting for tests..." ]
---     else if notStartedTally == totalTally then
---       p [] [ text "Use the Start button to run the following tests:" ]
---     else if runningTally + passedTally + failedTally = totalTally then
---       div []
---         [ h2 [] Totals:
---         , span [] [ test ("Tests running: ")]
---
---         ]
 
 
 statusTally : List Test.Model -> String -> Int
@@ -190,28 +108,76 @@ statusTally testList status =
 
 
 
--- view : Signal.Address Action -> Model -> Html
--- view address model =
---   let
---     counts =
---       p
---         []
---         [ text
---             (toString (List.length model.counters)
---               ++ " Counters, "
---               ++ toString (List.sum (List.map snd model.counters))
---               ++ " Counted"
---             )
---         ]
---
---     insert =
---       button [ onClick address Insert ] [ text "Add" ]
---   in
---     div [] (counts :: insert :: List.map (viewCounter address) model.counters)
+-- VIEW
 
 
-testView : Signal.Address Action -> Test.Model -> Html
-testView address model =
+view : Signal.Address Action -> Model -> Html
+view address model =
+  let
+    pTag msg =
+      p [] [ text msg ]
+
+    runningStr =
+      statusTally model.tests "Running" |> toString
+
+    passedStr =
+      statusTally model.tests "Passed" |> toString
+
+    failedStr =
+      statusTally model.tests "Failed" |> toString
+
+    passOrFailSummary =
+      if statusTally model.tests "Passed" == List.length model.tests then
+        ("Woohoo! All " ++ passedStr ++ " tests passed!")
+      else
+        (passedStr ++ " passed; " ++ failedStr ++ " failed.")
+
+    elementsByState =
+      case model.state of
+        Waiting ->
+          [ pTag "Waiting for Tests..." ]
+
+        Loaded ->
+          [ pTag "Use the Start button to run the following tests:"
+          , button [ onClick address (SubMsg (Test.StartTest)) ] [ text "Start" ]
+          , (viewTestTable address model)
+          ]
+
+        Started ->
+          [ pTag "Tests Started!"
+          , pTag (runningStr ++ " running; " ++ passedStr ++ " passed; " ++ failedStr ++ " failed.")
+          , (viewTestTable address model)
+          ]
+
+        Finished ->
+          [ pTag "FINISHED!"
+          , pTag passOrFailSummary
+          , (viewTestTable address model)
+          ]
+  in
+    div [] elementsByState
+
+
+viewTestTable : Signal.Address Action -> Model -> Html
+viewTestTable address model =
+  table
+    []
+    [ thead
+        []
+        [ tr
+            []
+            [ th [] [ text "Status" ]
+            , th [] [ text "Test Number/Description" ]
+            ]
+        ]
+    , tbody
+        []
+        (List.map (viewTest address) model.tests)
+    ]
+
+
+viewTest : Signal.Address Action -> Test.Model -> Html
+viewTest address model =
   Test.viewInTable (Signal.forwardTo address SubMsg) model
 
 
