@@ -11833,6 +11833,13 @@ Elm.Test.make = function (_elm) {
    $String = Elm.String.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
+   var liveArea = function (additionalAttributes) {
+      return A2($List.append,
+      additionalAttributes,
+      _U.list([A2($Html$Attributes.attribute,"role","status")
+              ,A2($Html$Attributes.attribute,"aria-live","polite")
+              ,A2($Html$Attributes.attribute,"aria-atomic","false")]));
+   };
    var statusToClass = function (status) {
       return A2($String.join,
       "-",
@@ -11844,13 +11851,11 @@ Elm.Test.make = function (_elm) {
       "test ",
       statusToClass(model.status)))]),
       _U.list([A2($Html.td,
-              _U.list([$Html$Attributes.$class("test-status")]),
-              _U.list([$Html.text(model.status)]))
-              ,A2($Html.td,
               _U.list([$Html$Attributes.$class("test-description")]),
-              _U.list([$Html.text(A2($Basics._op["++"],
-              $Basics.toString(model.id),
-              A2($Basics._op["++"],": ",model.description)))]))]));
+              _U.list([$Html.text(model.description)]))
+              ,A2($Html.td,
+              _U.list([$Html$Attributes.$class("test-status")]),
+              _U.list([$Html.text(model.status)]))]));
    });
    var DoNothing = {ctor: "DoNothing"};
    var startTest = F2(function (startAddress,id) {
@@ -11895,7 +11900,7 @@ Elm.Test.make = function (_elm) {
               _U.list([A2($Html$Events.onClick,address,StartTest)]),
               _U.list([$Html.text("Start Test")]))
               ,A2($Html.span,
-              _U.list([$Html$Attributes.$class("test-status")]),
+              liveArea(_U.list([$Html$Attributes.$class("test-status")])),
               _U.list([$Html.text(A2($Basics._op["++"],
               " Status: ",
               model.status))]))]));
@@ -11919,6 +11924,7 @@ Elm.Test.make = function (_elm) {
                              ,view: view
                              ,viewInTable: viewInTable
                              ,statusToClass: statusToClass
+                             ,liveArea: liveArea
                              ,startTest: startTest};
 };
 Elm.TestRunner = Elm.TestRunner || {};
@@ -11957,9 +11963,25 @@ Elm.TestRunner.make = function (_elm) {
       model);
    });
    var viewTestTable = F2(function (address,model) {
+      var tallyString = A2($Basics._op["++"],
+      "Tests Summary: ",
+      A2($Basics._op["++"],
+      $Basics.toString(A2(statusTally,model.tests,"Passed")),
+      A2($Basics._op["++"],
+      " passed; ",
+      A2($Basics._op["++"],
+      $Basics.toString(A2(statusTally,model.tests,"Failed")),
+      A2($Basics._op["++"],
+      " failed; ",
+      A2($Basics._op["++"],
+      $Basics.toString(A2(statusTally,model.tests,"Running")),
+      " are still running."))))));
       return A2($Html.table,
       _U.list([]),
-      _U.list([A2($Html.thead,
+      _U.list([A2($Html.caption,
+              _U.list([]),
+              _U.list([$Html.text(tallyString)]))
+              ,A2($Html.thead,
               _U.list([]),
               _U.list([A2($Html.tr,
               _U.list([]),
@@ -11968,61 +11990,41 @@ Elm.TestRunner.make = function (_elm) {
                       _U.list([$Html.text("Status")]))
                       ,A2($Html.th,
                       _U.list([]),
-                      _U.list([$Html.text("Test Number/Description")]))]))]))
+                      _U.list([$Html.text("Test Description")]))]))]))
               ,A2($Html.tbody,
               _U.list([]),
               A2($List.map,viewTest(address),model.tests))]));
    });
    var view = F2(function (address,model) {
-      var failedStr = $Basics.toString(A2(statusTally,
-      model.tests,
-      "Failed"));
-      var passedStr = $Basics.toString(A2(statusTally,
-      model.tests,
-      "Passed"));
-      var passOrFailSummary = _U.eq(A2(statusTally,
+      var passOrFailMsg = _U.eq(A2(statusTally,
       model.tests,
       "Passed"),
-      $List.length(model.tests)) ? A2($Basics._op["++"],
-      "Woohoo! All ",
-      A2($Basics._op["++"],
-      passedStr,
-      " tests passed!")) : A2($Basics._op["++"],
-      passedStr,
-      A2($Basics._op["++"],
-      " passed; ",
-      A2($Basics._op["++"],failedStr," failed.")));
-      var runningStr = $Basics.toString(A2(statusTally,
-      model.tests,
-      "Running"));
-      var pTag = function (msg) {
-         return A2($Html.p,_U.list([]),_U.list([$Html.text(msg)]));
-      };
+      $List.length(model.tests)) ? "Woohoo! All tests passed!" : "Tests complete.  Some tests failed. :(";
+      var pTag = F2(function (attr,msg) {
+         return A2($Html.p,attr,_U.list([$Html.text(msg)]));
+      });
       var elementsByState = function () {
          var _p0 = model.state;
          switch (_p0.ctor)
-         {case "Waiting": return _U.list([pTag("Waiting for Tests...")]);
-            case "Loaded":
-            return _U.list([pTag("Use the Start button to run the following tests:")
-                           ,A2($Html.button,
-                           _U.list([A2($Html$Events.onClick,
-                           address,
-                           SubMsg($Test.StartTest))]),
-                           _U.list([$Html.text("Start")]))
-                           ,A2(viewTestTable,address,model)]);
-            case "Started": return _U.list([pTag("Tests Started!")
-                                           ,pTag(A2($Basics._op["++"],
-                                           runningStr,
-                                           A2($Basics._op["++"],
-                                           " running; ",
-                                           A2($Basics._op["++"],
-                                           passedStr,
-                                           A2($Basics._op["++"],
-                                           " passed; ",
-                                           A2($Basics._op["++"],failedStr," failed."))))))
+         {case "Waiting": return _U.list([A2(pTag,
+              _U.list([]),
+              "Waiting for Tests...")]);
+            case "Loaded": return _U.list([A2(pTag,
+                                          $Test.liveArea(_U.list([])),
+                                          "Use the Start button to run the following tests:")
+                                          ,A2($Html.button,
+                                          _U.list([A2($Html$Events.onClick,
+                                          address,
+                                          SubMsg($Test.StartTest))]),
+                                          _U.list([$Html.text("Start")]))
+                                          ,A2(viewTestTable,address,model)]);
+            case "Started": return _U.list([A2(pTag,
+                                           $Test.liveArea(_U.list([])),
+                                           "Tests Started!")
                                            ,A2(viewTestTable,address,model)]);
-            default: return _U.list([pTag("FINISHED!")
-                                    ,pTag(passOrFailSummary)
+            default: return _U.list([A2(pTag,
+                                    $Test.liveArea(_U.list([])),
+                                    passOrFailMsg)
                                     ,A2(viewTestTable,address,model)]);}
       }();
       return A2($Html.div,_U.list([]),elementsByState);
@@ -12070,7 +12072,7 @@ Elm.TestRunner.make = function (_elm) {
                   ,_1: $Effects.batch(fxList)};
          case "PassResult": var _p5 = _p1._0._0;
            var newState = _U.eq(A2(statusTally,model.tests,"Running"),
-           0) ? Finished : model.state;
+           1) ? Finished : model.state;
            var updateStatus = function (testModel) {
               return _U.eq(testModel.id,_p5) ? $Basics.fst(A3($Test.update,
               startAddress,

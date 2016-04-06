@@ -75,7 +75,7 @@ view address model =
         [ onClick address (StartTest) ]
         [ text "Start Test" ]
     , span
-        [ class "test-status" ]
+        (liveArea [ class "test-status" ])
         [ text (" Status: " ++ model.status) ]
     ]
 
@@ -85,11 +85,11 @@ viewInTable address model =
   tr
     [ class ("test " ++ statusToClass model.status) ]
     [ td
+        [ class "test-description" ]
+        [ text model.description ]
+    , td
         [ class "test-status" ]
         [ text model.status ]
-    , td
-        [ class "test-description" ]
-        [ text (toString (model.id) ++ ": " ++ model.description) ]
     ]
 
 
@@ -98,6 +98,20 @@ statusToClass status =
   String.toLower status
     |> String.split " "
     |> String.join "-"
+
+
+
+-- Adds necessary attributes for screen-reader updates on state change
+
+
+liveArea : List Html.Attribute -> List Html.Attribute
+liveArea additionalAttributes =
+  List.append
+    additionalAttributes
+    [ attribute "role" "status"
+    , attribute "aria-live" "polite"
+    , attribute "aria-atomic" "false"
+    ]
 
 
 

@@ -88,7 +88,7 @@ update startAddress action model =
             testModel
 
         newState =
-          if statusTally model.tests "Running" == 0 then
+          if statusTally model.tests "Running" == 1 then
             Finished
           else
             model.state
@@ -114,44 +114,33 @@ statusTally testList status =
 view : Signal.Address Action -> Model -> Html
 view address model =
   let
-    pTag msg =
-      p [] [ text msg ]
+    pTag attr msg =
+      p attr [ text msg ]
 
-    runningStr =
-      statusTally model.tests "Running" |> toString
-
-    passedStr =
-      statusTally model.tests "Passed" |> toString
-
-    failedStr =
-      statusTally model.tests "Failed" |> toString
-
-    passOrFailSummary =
+    passOrFailMsg =
       if statusTally model.tests "Passed" == List.length model.tests then
-        ("Woohoo! All " ++ passedStr ++ " tests passed!")
+        "Woohoo! All tests passed!"
       else
-        (passedStr ++ " passed; " ++ failedStr ++ " failed.")
+        "Tests complete.  Some tests failed. :("
 
     elementsByState =
       case model.state of
         Waiting ->
-          [ pTag "Waiting for Tests..." ]
+          [ pTag [] "Waiting for Tests..." ]
 
         Loaded ->
-          [ pTag "Use the Start button to run the following tests:"
+          [ pTag (Test.liveArea []) "Use the Start button to run the following tests:"
           , button [ onClick address (SubMsg (Test.StartTest)) ] [ text "Start" ]
           , (viewTestTable address model)
           ]
 
         Started ->
-          [ pTag "Tests Started!"
-          , pTag (runningStr ++ " running; " ++ passedStr ++ " passed; " ++ failedStr ++ " failed.")
+          [ pTag (Test.liveArea []) "Tests Started!"
           , (viewTestTable address model)
           ]
 
         Finished ->
-          [ pTag "FINISHED!"
-          , pTag passOrFailSummary
+          [ pTag (Test.liveArea []) passOrFailMsg
           , (viewTestTable address model)
           ]
   in
@@ -160,20 +149,32 @@ view address model =
 
 viewTestTable : Signal.Address Action -> Model -> Html
 viewTestTable address model =
-  table
-    []
-    [ thead
-        []
-        [ tr
-            []
-            [ th [] [ text "Status" ]
-            , th [] [ text "Test Number/Description" ]
-            ]
-        ]
-    , tbody
-        []
-        (List.map (viewTest address) model.tests)
-    ]
+  let
+    tallyString =
+      ("Tests Summary: "
+        ++ (statusTally model.tests "Passed" |> toString)
+        ++ " passed; "
+        ++ (statusTally model.tests "Failed" |> toString)
+        ++ " failed; "
+        ++ (statusTally model.tests "Running" |> toString)
+        ++ " are still running."
+      )
+  in
+    table
+      []
+      [ caption [] [ text tallyString ]
+      , thead
+          []
+          [ tr
+              []
+              [ th [] [ text "Status" ]
+              , th [] [ text "Test Description" ]
+              ]
+          ]
+      , tbody
+          []
+          (List.map (viewTest address) model.tests)
+      ]
 
 
 viewTest : Signal.Address Action -> Test.Model -> Html
