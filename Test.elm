@@ -35,7 +35,7 @@ initialModel ( id, desc ) =
 
 
 type Action
-  = StartTest TestId
+  = StartTest
   | ResultStatus ( TestId, Bool )
   | DoNothing
 
@@ -43,7 +43,7 @@ type Action
 update : Signal.Address TestId -> Action -> Model -> ( Model, Effects Action )
 update startAddress action model =
   case action of
-    StartTest id ->
+    StartTest ->
       ( { model | status = "Running" }
       , startTest startAddress model.id
       )
@@ -72,7 +72,7 @@ view address model =
         [ class "test-description" ]
         [ text ("Test that: " ++ model.description) ]
     , button
-        [ onClick address (StartTest model.id) ]
+        [ onClick address (StartTest) ]
         [ text "Start Test" ]
     , span
         [ class "test-status" ]

@@ -10,10 +10,8 @@ app =
   StartApp.start
     { init = init testInfo
     , update = update startTestMb.address
-    , view =
-        view
-        -- , inputs = [ Signal.map Test.ResultStatus testResult ]
-    , inputs = []
+    , view = view
+    , inputs = [ Signal.map TestRunner.PassResult testResult ]
     }
 
 

@@ -38,6 +38,8 @@ init testList =
 
 type Action
   = BuildTests (List ( Int, String ))
+  | SubMsg Test.Action
+  | PassResult ( Int, Bool )
   | DoNothing
 
 
@@ -51,13 +53,38 @@ update startAddress action model =
       , Effects.none
       )
 
-    -- StartTests ->
-    --   ( { model
-    --       | tests =
-    --           List.map (\testModel -> Test.update StartTests testModel.id) model.tests
-    --     }
-    --   , Effects.none
-    --   )
+    SubMsg msg ->
+      let
+        subUpdate test =
+          let
+            ( updatedTest, fx ) =
+              Test.update startAddress msg test
+          in
+            ( updatedTest
+            , Effects.map (SubMsg) fx
+            )
+
+        ( newTestList, fxList ) =
+          model.tests
+            |> List.map subUpdate
+            |> List.unzip
+      in
+        ( { model | tests = newTestList }
+        , Effects.batch fxList
+        )
+
+    PassResult ( id, hasPassed ) ->
+      let
+        updateStatus testModel =
+          if testModel.id == id then
+            fst (Test.update startAddress (Test.ResultStatus ( id, hasPassed )) testModel)
+          else
+            testModel
+      in
+        ( { model | tests = List.map updateStatus model.tests }
+        , Effects.none
+        )
+
     --
     --
     -- ResultStatus ( id, hasPassed ) ->
@@ -78,24 +105,88 @@ update startAddress action model =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  div
-    []
-    [ p [] [ text model.message ]
-    , table
-        []
-        [ thead
-            []
-            [ tr
-                []
-                [ th [] [ text "Status" ]
-                , th [] [ text "Test Number/Description" ]
-                ]
-            ]
-        , tbody
-            []
-            (List.map (testView address) model.tests)
-        ]
-    ]
+  let
+    totalTally =
+      List.length model.tests
+
+    notStartedTally =
+      statusTally model.tests "Not Started Yet"
+
+    runningTally =
+      statusTally model.tests "Running"
+
+    passedTally =
+      statusTally model.tests "Passed"
+
+    failedTally =
+      statusTally model.tests "Failed"
+
+    message =
+      if (passedTally + failedTally == totalTally) then
+        "Tests Complete!"
+      else if (runningTally > 0) then
+        "Tests Started!"
+      else
+        model.message
+  in
+    div
+      []
+      [ p [] [ text message ]
+      , button [ onClick address (SubMsg (Test.StartTest)) ] [ text "Start" ]
+      , table
+          []
+          [ thead
+              []
+              [ tr
+                  []
+                  [ th [] [ text "Status" ]
+                  , th [] [ text "Test Number/Description" ]
+                  ]
+              ]
+          , tbody
+              []
+              (List.map (testView address) model.tests)
+          ]
+      , p
+          []
+          [ text
+              ("Running: "
+                ++ (runningTally |> toString)
+                ++ " Passed: "
+                ++ (passedTally |> toString)
+                ++ " Failed: "
+                ++ (failedTally |> toString)
+              )
+          ]
+      ]
+
+
+
+-- messageView : Model -> Html
+-- messageView model =
+--   let
+--     totalTally = List.length model.tests
+--     notStartedTally = statusTally model.tests "Not Started Yet"
+--     runningTally = statusTally model.tests "Running"
+--     passedTally = statusTally model.tests "Passed"
+--     failedTally = statusTally model.tests "Failed"
+--   in
+--     if totalTally == 0 then
+--       p [] [ text "Waiting for tests..." ]
+--     else if notStartedTally == totalTally then
+--       p [] [ text "Use the Start button to run the following tests:" ]
+--     else if runningTally + passedTally + failedTally = totalTally then
+--       div []
+--         [ h2 [] Totals:
+--         , span [] [ test ("Tests running: ")]
+--
+--         ]
+
+
+statusTally : List Test.Model -> String -> Int
+statusTally testList status =
+  List.filter (\test -> test.status == status) testList
+    |> List.length
 
 
 
@@ -121,7 +212,7 @@ view address model =
 
 testView : Signal.Address Action -> Test.Model -> Html
 testView address model =
-  Test.viewInTable (Signal.forwardTo address (\_ -> DoNothing)) model
+  Test.viewInTable (Signal.forwardTo address SubMsg) model
 
 
 
