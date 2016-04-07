@@ -18,6 +18,11 @@ type alias Model =
   }
 
 
+
+--Id isn't really needed at the test level, and works better in TestRunner
+--Will refactor to match this
+
+
 type alias TestId =
   Int
 
@@ -36,7 +41,7 @@ initialModel ( id, desc ) =
 
 type Action
   = StartTest
-  | ResultStatus ( TestId, Bool )
+  | ResultStatus Bool
   | DoNothing
 
 
@@ -48,7 +53,7 @@ update startAddress action model =
       , startTest startAddress model.id
       )
 
-    ResultStatus ( id, hasPassed ) ->
+    ResultStatus hasPassed ->
       ( if hasPassed == True then
           { model | status = "Passed" }
         else

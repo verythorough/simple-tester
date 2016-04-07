@@ -11877,7 +11877,7 @@ Elm.Test.make = function (_elm) {
                                 ,_0: _U.update(model,{status: "Running"})
                                 ,_1: A2(startTest,startAddress,model.id)};
          case "ResultStatus": return {ctor: "_Tuple2"
-                                     ,_0: _U.eq(_p2._0._1,true) ? _U.update(model,
+                                     ,_0: _U.eq(_p2._0,true) ? _U.update(model,
                                      {status: "Passed"}) : _U.update(model,{status: "Failed"})
                                      ,_1: $Effects.none};
          default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
@@ -11987,10 +11987,8 @@ Elm.TestRunner.make = function (_elm) {
               _U.list([]),
               _U.list([A2($Html.th,
                       _U.list([]),
-                      _U.list([$Html.text("Status")]))
-                      ,A2($Html.th,
-                      _U.list([]),
-                      _U.list([$Html.text("Test Description")]))]))]))
+                      _U.list([$Html.text("Test Description")]))
+                      ,A2($Html.th,_U.list([]),_U.list([$Html.text("Status")]))]))]))
               ,A2($Html.tbody,
               _U.list([]),
               A2($List.map,viewTest(address),model.tests))]));
@@ -12070,13 +12068,15 @@ Elm.TestRunner.make = function (_elm) {
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,{tests: newTestList,state: newState})
                   ,_1: $Effects.batch(fxList)};
-         case "PassResult": var _p5 = _p1._0._0;
-           var newState = _U.eq(A2(statusTally,model.tests,"Running"),
-           1) ? Finished : model.state;
+         case "PassResult": var newState = _U.cmp(A2(statusTally,
+           model.tests,
+           "Running"),
+           1) < 1 ? Finished : model.state;
            var updateStatus = function (testModel) {
-              return _U.eq(testModel.id,_p5) ? $Basics.fst(A3($Test.update,
+              return _U.eq(testModel.id,
+              _p1._0._0) ? $Basics.fst(A3($Test.update,
               startAddress,
-              $Test.ResultStatus({ctor: "_Tuple2",_0: _p5,_1: _p1._0._1}),
+              $Test.ResultStatus(_p1._0._1),
               testModel)) : testModel;
            };
            return {ctor: "_Tuple2"

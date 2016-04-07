@@ -37,7 +37,7 @@ init testList =
 
 type Action
   = BuildTests (List ( Int, String ))
-  | SubMsg Test.Action
+  | SubMsg Int Test.Action
   | PassResult ( Int, Bool )
   | DoNothing
 
@@ -52,17 +52,20 @@ update startAddress action model =
       , Effects.none
       )
 
-    --TODO: combine SubMsg and PassResult into one message
-    SubMsg msg ->
+    --TODO: combine SubMsg and PassResult into one action?
+    SubMsg msgId msg ->
       let
         subUpdate test =
-          let
-            ( updatedTest, fx ) =
-              Test.update startAddress msg test
-          in
-            ( updatedTest
-            , Effects.map (SubMsg) fx
-            )
+          if test.id == msgId then
+            let
+              ( updatedTest, fx ) =
+                Test.update startAddress msg test
+            in
+              ( updatedTest
+              , Effects.map (SubMsg test.id) fx
+              )
+          else
+            ( test, Effects.none )
 
         ( newTestList, fxList ) =
           model.tests
@@ -79,16 +82,41 @@ update startAddress action model =
         , Effects.batch fxList
         )
 
+    -- SubMsg msg ->
+    --   let
+    --     subUpdate test =
+    --       let
+    --         ( updatedTest, fx ) =
+    --           Test.update startAddress msg test
+    --       in
+    --         ( updatedTest
+    --         , Effects.map (SubMsg) fx
+    --         )
+    --
+    --     ( newTestList, fxList ) =
+    --       model.tests
+    --         |> List.map subUpdate
+    --         |> List.unzip
+    --
+    --     newState =
+    --       if msg == Test.StartTest then
+    --         Started
+    --       else
+    --         model.state
+    --   in
+    --     ( { model | tests = newTestList, state = newState }
+    --     , Effects.batch fxList
+    --     )
     PassResult ( id, hasPassed ) ->
       let
         updateStatus testModel =
           if testModel.id == id then
-            fst (Test.update startAddress (Test.ResultStatus ( id, hasPassed )) testModel)
+            fst ((Test.update startAddress (Test.ResultStatus hasPassed)) testModel)
           else
             testModel
 
         newState =
-          if statusTally model.tests "Running" == 1 then
+          if statusTally model.tests "Running" <= 1 then
             Finished
           else
             model.state
@@ -130,7 +158,7 @@ view address model =
 
         Loaded ->
           [ pTag (Test.liveArea []) "Use the Start button to run the following tests:"
-          , button [ onClick address (SubMsg (Test.StartTest)) ] [ text "Start" ]
+          , button [ onClick address (SubMsg 2 (Test.StartTest)) ] [ text "Start" ]
           , (viewTestTable address model)
           ]
 
@@ -167,8 +195,8 @@ viewTestTable address model =
           []
           [ tr
               []
-              [ th [] [ text "Status" ]
-              , th [] [ text "Test Description" ]
+              [ th [] [ text "Test Description" ]
+              , th [] [ text "Status" ]
               ]
           ]
       , tbody
@@ -179,20 +207,12 @@ viewTestTable address model =
 
 viewTest : Signal.Address Action -> Test.Model -> Html
 viewTest address model =
-  Test.viewInTable (Signal.forwardTo address SubMsg) model
+  Test.viewInTable (Signal.forwardTo address (SubMsg ) model
 
 
 
--- viewCounter : Signal.Address Action -> ( ID, Counter.Model ) -> Html
--- viewCounter address ( id, model ) =
---   let
---     context =
---       Counter.Context
---         (Signal.forwardTo address (Modify id))
---         (Signal.forwardTo address (always (Remove id)))
---   in
---     Counter.viewWithRemoveButton context model
 -- EFFECTS
+--TODO: account for errors here?
 
 
 loadTests : List ( Int, String ) -> Effects Action
