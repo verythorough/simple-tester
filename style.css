@@ -1,56 +1,116 @@
-html {
-  font-size: 100%;
-}
+/* In a production environment, I'd use a css preprocessor like Sass or elm-css */
 
 body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  margin: 0;
+  max-width: 60em;
+  margin: 0 auto;
+  padding: 0 5% 1em;
+  box-sizing: border-box;
   color: midnightblue;
+  text-align: center;
 }
 
 body, button, input {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
 }
 
-.site-header {
-  padding: 0.5em 2%;
-  background-color: lightblue;
-}
-
 h1 {
   font-weight: lighter;
   font-size: 3em;
-  margin: 0.2em;
 }
 
-.results-table {
-  width: 100%;
-  margin-top: 1.5em;
+strong {
+  font-weight: 600;
 }
 
-table caption,
-thead {
-  text-align: left;
+.site-header,
+.main {
+  border-bottom: 1px solid cornflowerblue;
+}
+
+.main {
+  flex: 1;
+}
+
+.start-message {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+a,
+a:visited {
+  color: cornflowerblue;
 }
 
 button {
   border: none;
   padding: 0.5em 1em;
-  background: royalblue;
+  background: cornflowerblue;
   color: #fff;
 }
 
-.main {
-  flex: 1;
-  max-width: 60em;
-  margin: 0 2%;
-  padding: 2em 0;
-  box-sizing: border-box;
-  border-bottom: 1px solid #aaa;
+table {
+  width: 100%;
+  margin-top: 1.5em;
+  border-collapse: collapse;
+  text-align: left;
 }
 
-.site-footer {
-  text-align: center;
+caption {
+  margin-bottom: 0.5em;
+}
+
+.results-summary > span {
+  display: inline-block;
+  margin-right: 0.25em;
+}
+
+th {
+  border-bottom: 1px solid cornflowerblue;
+  font-weight: 600;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 0.25em 0.5em;
+}
+
+tbody tr:nth-child(odd) {
+  background: whitesmoke;
+}
+
+.test-status {
+  min-width: 5em;
+}
+
+.running .test-status::after {
+  content: "...";
+  animation-name: dots;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes dots {
+  0%   {content: ""; }
+  20%  { content: ""; }
+  40%  { content: "."; }
+  60%  { content: ".."; }
+  80%  { content: "..."; }
+  100% { content: "..."; }
+}
+
+.passed .test-status::before {
+  content: "\2714 ";
+  color: green;
+  padding-right: 0.5em;
+}
+
+.failed .test-status::before {
+  content: "\274C ";
+  color: crimson;
+  padding-right: 0.5em;
 }

@@ -129,8 +129,11 @@ view address model =
           [ pTag [] "Waiting for Tests..." ]
 
         Loaded ->
-          [ pTag (Test.liveArea []) "Use the Start button to run the following tests:"
-          , button [ onClick address (SubMsg Test.StartTest) ] [ text "Start" ]
+          [ p
+              [ class "start-message" ]
+              [ span (Test.liveArea []) [ text "Use the Start button to run the following tests:" ]
+              , button [ onClick address (SubMsg Test.StartTest) ] [ text "Start" ]
+              ]
           , (viewTestTable address model)
           ]
 
@@ -150,25 +153,30 @@ view address model =
 viewTestTable : Signal.Address Action -> Model -> Html
 viewTestTable address model =
   let
-    tallyString =
-      ("Tests Summary: "
-        ++ (statusTally model.tests "Passed" |> toString)
-        ++ " passed; "
-        ++ (statusTally model.tests "Failed" |> toString)
-        ++ " failed; "
-        ++ (statusTally model.tests "Running" |> toString)
-        ++ " are still running."
-      )
+    passedStr =
+      ((statusTally model.tests "Passed" |> toString) ++ " passed; ")
+
+    failedStr =
+      ((statusTally model.tests "Failed" |> toString) ++ " failed; ")
+
+    runningStr =
+      ((statusTally model.tests "Running" |> toString) ++ " are still running.")
   in
     table
       [ class "results-table" ]
-      [ caption [] [ text tallyString ]
+      [ caption
+          [ class "results-summary" ]
+          [ strong [] [ text "Tests Summary: " ]
+          , span [] [ text passedStr ]
+          , span [] [ text failedStr ]
+          , span [] [ text runningStr ]
+          ]
       , thead
           []
           [ tr
               []
-              [ th [] [ text "Test Description" ]
-              , th [] [ text "Status" ]
+              [ th [] [ text "Status" ]
+              , th [] [ text "Test Description" ]
               ]
           ]
       , tbody

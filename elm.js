@@ -11851,11 +11851,11 @@ Elm.Test.make = function (_elm) {
       "test ",
       statusToClass(model.status)))]),
       _U.list([A2($Html.td,
-              _U.list([$Html$Attributes.$class("test-description")]),
-              _U.list([$Html.text(model.description)]))
-              ,A2($Html.td,
               _U.list([$Html$Attributes.$class("test-status")]),
-              _U.list([$Html.text(model.status)]))]));
+              _U.list([$Html.text(model.status)]))
+              ,A2($Html.td,
+              _U.list([$Html$Attributes.$class("test-description")]),
+              _U.list([$Html.text(model.description)]))]));
    });
    var DoNothing = {ctor: "DoNothing"};
    var startTest = F2(function (startAddress,id) {
@@ -11964,32 +11964,35 @@ Elm.TestRunner.make = function (_elm) {
       model);
    });
    var viewTestTable = F2(function (address,model) {
-      var tallyString = A2($Basics._op["++"],
-      "Tests Summary: ",
-      A2($Basics._op["++"],
-      $Basics.toString(A2(statusTally,model.tests,"Passed")),
-      A2($Basics._op["++"],
-      " passed; ",
-      A2($Basics._op["++"],
-      $Basics.toString(A2(statusTally,model.tests,"Failed")),
-      A2($Basics._op["++"],
-      " failed; ",
-      A2($Basics._op["++"],
+      var runningStr = A2($Basics._op["++"],
       $Basics.toString(A2(statusTally,model.tests,"Running")),
-      " are still running."))))));
+      " are still running.");
+      var failedStr = A2($Basics._op["++"],
+      $Basics.toString(A2(statusTally,model.tests,"Failed")),
+      " failed; ");
+      var passedStr = A2($Basics._op["++"],
+      $Basics.toString(A2(statusTally,model.tests,"Passed")),
+      " passed; ");
       return A2($Html.table,
       _U.list([$Html$Attributes.$class("results-table")]),
       _U.list([A2($Html.caption,
-              _U.list([]),
-              _U.list([$Html.text(tallyString)]))
+              _U.list([$Html$Attributes.$class("results-summary")]),
+              _U.list([A2($Html.strong,
+                      _U.list([]),
+                      _U.list([$Html.text("Tests Summary: ")]))
+                      ,A2($Html.span,_U.list([]),_U.list([$Html.text(passedStr)]))
+                      ,A2($Html.span,_U.list([]),_U.list([$Html.text(failedStr)]))
+                      ,A2($Html.span,_U.list([]),_U.list([$Html.text(runningStr)]))]))
               ,A2($Html.thead,
               _U.list([]),
               _U.list([A2($Html.tr,
               _U.list([]),
               _U.list([A2($Html.th,
                       _U.list([]),
-                      _U.list([$Html.text("Test Description")]))
-                      ,A2($Html.th,_U.list([]),_U.list([$Html.text("Status")]))]))]))
+                      _U.list([$Html.text("Status")]))
+                      ,A2($Html.th,
+                      _U.list([]),
+                      _U.list([$Html.text("Test Description")]))]))]))
               ,A2($Html.tbody,
               _U.list([]),
               A2($List.map,viewTest(address),model.tests))]));
@@ -12008,14 +12011,16 @@ Elm.TestRunner.make = function (_elm) {
          {case "Waiting": return _U.list([A2(pTag,
               _U.list([]),
               "Waiting for Tests...")]);
-            case "Loaded": return _U.list([A2(pTag,
-                                          $Test.liveArea(_U.list([])),
-                                          "Use the Start button to run the following tests:")
-                                          ,A2($Html.button,
-                                          _U.list([A2($Html$Events.onClick,
-                                          address,
-                                          SubMsg($Test.StartTest))]),
-                                          _U.list([$Html.text("Start")]))
+            case "Loaded": return _U.list([A2($Html.p,
+                                          _U.list([$Html$Attributes.$class("start-message")]),
+                                          _U.list([A2($Html.span,
+                                                  $Test.liveArea(_U.list([])),
+                                                  _U.list([$Html.text("Use the Start button to run the following tests:")]))
+                                                  ,A2($Html.button,
+                                                  _U.list([A2($Html$Events.onClick,
+                                                  address,
+                                                  SubMsg($Test.StartTest))]),
+                                                  _U.list([$Html.text("Start")]))]))
                                           ,A2(viewTestTable,address,model)]);
             case "Started": return _U.list([A2(pTag,
                                            $Test.liveArea(_U.list([])),

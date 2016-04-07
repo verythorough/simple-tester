@@ -90,11 +90,11 @@ viewInTable address model =
   tr
     [ class ("test " ++ statusToClass model.status) ]
     [ td
-        [ class "test-description" ]
-        [ text model.description ]
-    , td
         [ class "test-status" ]
         [ text model.status ]
+    , td
+        [ class "test-description" ]
+        [ text model.description ]
     ]
 
 
