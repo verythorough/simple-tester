@@ -3,6 +3,7 @@ module Test (..) where
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import A11y
 import Effects exposing (Effects)
 import Task exposing (Task)
 import String
@@ -19,8 +20,8 @@ type alias Model =
 
 
 
---Id isn't really needed at the test level, and works better in TestRunner
---Will refactor to match this
+--Id isn't really needed at the test level, and works better when stored in
+-- TestRunner.  I'll refactor later to match this.
 
 
 type alias TestId =
@@ -80,9 +81,13 @@ view address model =
         [ onClick address (StartTest) ]
         [ text "Start Test" ]
     , span
-        (liveArea [ class "test-status" ])
+        (A11y.liveArea [ class "test-status" ])
         [ text (" Status: " ++ model.status) ]
     ]
+
+
+
+-- View above used for single view.  Below used for TestRunner table view.
 
 
 viewInTable : Signal.Address Action -> Model -> Html
@@ -103,20 +108,6 @@ statusToClass status =
   String.toLower status
     |> String.split " "
     |> String.join "-"
-
-
-
--- Adds necessary attributes for screen-reader updates on state change
-
-
-liveArea : List Html.Attribute -> List Html.Attribute
-liveArea additionalAttributes =
-  List.append
-    additionalAttributes
-    [ attribute "role" "status"
-    , attribute "aria-live" "polite"
-    , attribute "aria-atomic" "false"
-    ]
 
 
 

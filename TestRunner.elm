@@ -4,6 +4,7 @@ import Test exposing (TestId)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import A11y
 import Effects exposing (Effects)
 import Task
 
@@ -52,7 +53,7 @@ update startAddress action model =
       , Effects.none
       )
 
-    --TODO: combine SubMsg and PassResult into one action?
+    --TODO: combine SubMsg and PassResult into one, modular action?
     SubMsg msg ->
       let
         subUpdate test =
@@ -114,9 +115,6 @@ statusTally testList status =
 view : Signal.Address Action -> Model -> Html
 view address model =
   let
-    pTag attr msg =
-      p attr [ text msg ]
-
     passOrFailMsg =
       if statusTally model.tests "Passed" == List.length model.tests then
         "Woohoo! All tests passed!"
@@ -126,24 +124,28 @@ view address model =
     elementsByState =
       case model.state of
         Waiting ->
-          [ pTag [] "Waiting for Tests..." ]
+          [ p [] [ text "Waiting for Tests..." ] ]
 
         Loaded ->
           [ p
+              -- Assigning a class enables special styling for the text/button
+              --  combo in this state.
               [ class "start-message" ]
-              [ span (Test.liveArea []) [ text "Use the Start button to run the following tests:" ]
+              [ span
+                  (A11y.liveArea [])
+                  [ text "Use the Start button to run the following tests:" ]
               , button [ onClick address (SubMsg Test.StartTest) ] [ text "Start" ]
               ]
           , (viewTestTable address model)
           ]
 
         Started ->
-          [ pTag (Test.liveArea []) "Tests Started!"
+          [ p (A11y.liveArea []) [ text "Tests Started!" ]
           , (viewTestTable address model)
           ]
 
         Finished ->
-          [ pTag (Test.liveArea []) passOrFailMsg
+          [ p (A11y.liveArea []) [ text passOrFailMsg ]
           , (viewTestTable address model)
           ]
   in
@@ -153,23 +155,20 @@ view address model =
 viewTestTable : Signal.Address Action -> Model -> Html
 viewTestTable address model =
   let
-    passedStr =
-      ((statusTally model.tests "Passed" |> toString) ++ " passed; ")
-
-    failedStr =
-      ((statusTally model.tests "Failed" |> toString) ++ " failed; ")
-
-    runningStr =
-      ((statusTally model.tests "Running" |> toString) ++ " are still running.")
+    statusToMsg status predicate =
+      -- "predicate" is the string following the number, e.g. " tests passed; "
+      ((statusTally model.tests status |> toString) ++ predicate)
   in
     table
       [ class "results-table" ]
+      -- Storing the summary in a caption increases semantic accessibility
       [ caption
           [ class "results-summary" ]
+          -- Splitting this into spans enables graceful wrapping at narrow widths
           [ strong [] [ text "Tests Summary: " ]
-          , span [] [ text passedStr ]
-          , span [] [ text failedStr ]
-          , span [] [ text runningStr ]
+          , span [] [ text (statusToMsg "Passed" " passed; ") ]
+          , span [] [ text (statusToMsg "Failed" " failed; ") ]
+          , span [] [ text (statusToMsg "Running" " are still running.") ]
           ]
       , thead
           []
@@ -192,6 +191,8 @@ viewTest address model =
 
 
 -- EFFECTS
+--
+--
 --TODO: account for errors here?
 
 

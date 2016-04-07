@@ -1,4 +1,8 @@
-/* In a production environment, I'd use a css preprocessor like Sass or elm-css */
+/*
+In a production environment, I'd use a css preprocessor like Sass or elm-css.
+I would also minify (or package with webpack, etc.) my css and js.
+ */
+
 
 body {
   display: flex;
@@ -8,19 +12,24 @@ body {
   margin: 0 auto;
   padding: 0 5% 1em;
   box-sizing: border-box;
+  /* Contrast ratio with background passes WCAG AAA standard */
+  /* I use named colors for prototyping because I like their fun names. :) */
   color: midnightblue;
   text-align: center;
 }
 
+/* System fonts that look nice but don't require webfont loading */
 body, button, input {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
 }
 
+/* Many system fonts have more than two widths, so I take advantage of that. */
 h1 {
-  font-weight: lighter;
+  font-weight: 100;
   font-size: 3em;
 }
 
+/* Styles on base elements are not module-specific and presumed to be used sitewide. */
 strong {
   font-weight: 600;
 }
@@ -30,25 +39,29 @@ strong {
   border-bottom: 1px solid cornflowerblue;
 }
 
+/* This, plus flex settings in the body, enable the sticky footer. */
 .main {
   flex: 1;
 }
 
+/* Styles specific to the module are specified with classes */
 .start-message {
   display: flex;
   justify-content: space-around;
   align-items: center;
 }
 
+/* Link & button color passes WCAG AA and also passes 3:1 contrast with regular text. */
 a,
 a:visited {
-  color: cornflowerblue;
+  color: royalblue;
 }
 
 button {
+  margin: 0 0.25em;
   border: none;
   padding: 0.5em 1em;
-  background: cornflowerblue;
+  background: royalblue;
   color: #fff;
 }
 
@@ -63,6 +76,7 @@ caption {
   margin-bottom: 0.5em;
 }
 
+/* Enables graceful text wrapping at narrow widths */
 .results-summary > span {
   display: inline-block;
   margin-right: 0.25em;
@@ -83,10 +97,14 @@ tbody tr:nth-child(odd) {
   background: whitesmoke;
 }
 
+/* Ensures that column width won't re-size with state changes and animation.
+Sizing in em ensures that this works when the user changes default font size. */
 .test-status {
   min-width: 5em;
 }
 
+/* Unicode icons and animations are decorative. Content is still meaningful
+when features are not supported. */
 .running .test-status::after {
   content: "...";
   animation-name: dots;
@@ -103,13 +121,15 @@ tbody tr:nth-child(odd) {
   100% { content: "..."; }
 }
 
-.passed .test-status::before {
+.passed .test-description::before {
+  /* :heavy check marK: */
   content: "\2714 ";
   color: green;
   padding-right: 0.5em;
 }
 
-.failed .test-status::before {
+.failed .test-description::before {
+  /* :cross mark: */
   content: "\274C ";
   color: crimson;
   padding-right: 0.5em;
