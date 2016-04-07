@@ -1,0 +1,56 @@
+html {
+  font-size: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  color: midnightblue;
+}
+
+body, button, input {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+}
+
+.site-header {
+  padding: 0.5em 2%;
+  background-color: lightblue;
+}
+
+h1 {
+  font-weight: lighter;
+  font-size: 3em;
+  margin: 0.2em;
+}
+
+.results-table {
+  width: 100%;
+  margin-top: 1.5em;
+}
+
+table caption,
+thead {
+  text-align: left;
+}
+
+button {
+  border: none;
+  padding: 0.5em 1em;
+  background: royalblue;
+  color: #fff;
+}
+
+.main {
+  flex: 1;
+  max-width: 60em;
+  margin: 0 2%;
+  padding: 2em 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid #aaa;
+}
+
+.site-footer {
+  text-align: center;
+}

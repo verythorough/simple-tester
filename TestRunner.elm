@@ -37,7 +37,7 @@ init testList =
 
 type Action
   = BuildTests (List ( Int, String ))
-  | SubMsg Int Test.Action
+  | SubMsg Test.Action
   | PassResult ( Int, Bool )
   | DoNothing
 
@@ -53,19 +53,16 @@ update startAddress action model =
       )
 
     --TODO: combine SubMsg and PassResult into one action?
-    SubMsg msgId msg ->
+    SubMsg msg ->
       let
         subUpdate test =
-          if test.id == msgId then
-            let
-              ( updatedTest, fx ) =
-                Test.update startAddress msg test
-            in
-              ( updatedTest
-              , Effects.map (SubMsg test.id) fx
-              )
-          else
-            ( test, Effects.none )
+          let
+            ( updatedTest, fx ) =
+              Test.update startAddress msg test
+          in
+            ( updatedTest
+            , Effects.map (SubMsg) fx
+            )
 
         ( newTestList, fxList ) =
           model.tests
@@ -82,31 +79,6 @@ update startAddress action model =
         , Effects.batch fxList
         )
 
-    -- SubMsg msg ->
-    --   let
-    --     subUpdate test =
-    --       let
-    --         ( updatedTest, fx ) =
-    --           Test.update startAddress msg test
-    --       in
-    --         ( updatedTest
-    --         , Effects.map (SubMsg) fx
-    --         )
-    --
-    --     ( newTestList, fxList ) =
-    --       model.tests
-    --         |> List.map subUpdate
-    --         |> List.unzip
-    --
-    --     newState =
-    --       if msg == Test.StartTest then
-    --         Started
-    --       else
-    --         model.state
-    --   in
-    --     ( { model | tests = newTestList, state = newState }
-    --     , Effects.batch fxList
-    --     )
     PassResult ( id, hasPassed ) ->
       let
         updateStatus testModel =
@@ -158,7 +130,7 @@ view address model =
 
         Loaded ->
           [ pTag (Test.liveArea []) "Use the Start button to run the following tests:"
-          , button [ onClick address (SubMsg 2 (Test.StartTest)) ] [ text "Start" ]
+          , button [ onClick address (SubMsg Test.StartTest) ] [ text "Start" ]
           , (viewTestTable address model)
           ]
 
@@ -189,7 +161,7 @@ viewTestTable address model =
       )
   in
     table
-      []
+      [ class "results-table" ]
       [ caption [] [ text tallyString ]
       , thead
           []
@@ -207,7 +179,7 @@ viewTestTable address model =
 
 viewTest : Signal.Address Action -> Test.Model -> Html
 viewTest address model =
-  Test.viewInTable (Signal.forwardTo address (SubMsg ) model
+  Test.viewInTable (Signal.forwardTo address (SubMsg)) model
 
 
 

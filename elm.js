@@ -11937,6 +11937,7 @@ Elm.TestRunner.make = function (_elm) {
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
    $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $Html$Events = Elm.Html.Events.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
@@ -11977,7 +11978,7 @@ Elm.TestRunner.make = function (_elm) {
       $Basics.toString(A2(statusTally,model.tests,"Running")),
       " are still running."))))));
       return A2($Html.table,
-      _U.list([]),
+      _U.list([$Html$Attributes.$class("results-table")]),
       _U.list([A2($Html.caption,
               _U.list([]),
               _U.list([$Html.text(tallyString)]))

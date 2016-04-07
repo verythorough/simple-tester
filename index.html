@@ -12,24 +12,24 @@
 
 <body>
 
-<header class="site-header">
+<header role="banner" class="site-header section">
   <h1>Simple Tester</h1>
 </header>
 
-<div id="test-output" class="section"></div>
+<div id="content" role="main" class="main section"></div>
 
-<footer class="site-footer">
+<footer role="content-info" class="site-footer section">
   <p>Source code on <a href="https://github.com/verythorough/simple-tester">GitHub</a></p>
 </footer>
 
-</body>
-
+<!-- Tests stored separately so they can be switched by switching files -->
 <script type="text/javascript" src="spec.js"></script>
 
+<!-- In a production environment, this might be bundled with other scripts -->
 <script type="text/javascript">
   var app = Elm.embed(
     Elm.Main,
-    document.getElementById("test-output"),
+    document.getElementById("content"),
     { testInfo: listTests(tests)
     , testResult: [-1, false]
     }
@@ -52,20 +52,8 @@
     )
   }
 
-  // function runAllTests (tests) {
-  //   var i = 0, len = tests.length;
-  //   for (i; i < len; i++) {
-  //     runTest(i);
-  //   }
-  // }
-
   app.ports.testStart.subscribe(runTest);
 </script>
-
-<script type="text/javascript">
-var another = tests[1];
-
-</script>
-
+</body>
 
 </html>
