@@ -2,7 +2,7 @@
 A simple tester display for unit tests, written in Elm.
 
 ## Viewing and Modifying
-Simple Tester is hosted using [Github pages]https://pages.github.com/, and can be viewed immediately at https://verythorough.github.io/simple-tester.  If you fork the project as is, your version will be hosted at `https://<yourusename>,github.io/simple-tester`.
+Simple Tester is hosted using [Github pages](https://pages.github.com/), and can be viewed immediately at https://verythorough.github.io/simple-tester.  If you fork the project as is, your version will be hosted at `https://<yourusename>.github.io/simple-tester`.
 
 If you clone the project locally, you can run it using the `file` protocol.  Just drag `index.html` into the window of your favorite browser.
 
